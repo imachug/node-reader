@@ -87,10 +87,12 @@ Reader.prototype.emitKey = function(e) {
 };
 
 Reader.prototype.use = function(type) {
+	var args = Array.prototype.slice.call(arguments, 1);
+
 	if(typeof type == "function") {
-		type.call(this);
+		type.apply(this, args);
 	} else if(Reader.patterns[type]) {
-		Reader.patterns[type].call(this);
+		Reader.patterns[type].apply(this, args);
 	} else {
 		throw new TypeError("Unclear pattern " + type);
 	}
