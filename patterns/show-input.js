@@ -44,16 +44,7 @@ module.exports = function() {
 		this.outStream.write(ansi.cursorBackward(1) + this.state.visibleInput.substr(this.state.horizontalPos) + " " + ansi.cursorBackward(this.state.visibleInput.length - this.state.horizontalPos + 1));
 	});
 	this.onKey("Clear", function() {
-		// Replace characters with spaces
-		this.outStream.write(ansi.cursorBackward(this.state.horizontalPos) + " ".repeat(this.state.visibleInput.length));
-
-		// Go left
-		this.outStream.write(ansi.cursorBackward(this.state.visibleInput.length));
-
-		// Change inner data
-		this.state.input = "";
-		this.state.visibleInput = "";
-		this.state.horizontalPos = 0;
+		this.emit("reset");
 	});
 	this.onKey("Delete", function() {
 		if(this.state.horizontalPos >= this.state.visibleInput.length) {
@@ -65,5 +56,18 @@ module.exports = function() {
 		this.state.visibleInput = this.state.visibleInput.substr(0, this.state.horizontalPos) + this.state.visibleInput.substr(this.state.horizontalPos + 1);
 
 		this.outStream.write(this.state.visibleInput.substr(this.state.horizontalPos) + " " + ansi.cursorBackward(this.state.visibleInput.length - this.state.horizontalPos + 1));
+	});
+
+	this.on("reset", function() {
+		// Replace characters with spaces
+		this.outStream.write(ansi.cursorBackward(this.state.horizontalPos) + " ".repeat(this.state.visibleInput.length));
+
+		// Go left
+		this.outStream.write(ansi.cursorBackward(this.state.visibleInput.length));
+
+		// Change inner data
+		this.state.input = "";
+		this.state.visibleInput = "";
+		this.state.horizontalPos = 0;
 	});
 };
