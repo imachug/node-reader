@@ -1,0 +1,29 @@
+{
+  "name": "reader",
+  "version": "1.0.0",
+  "description": "A tiny package to create custom input fields.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imachug/node-reader.git"
+  },
+  "keywords": [
+    "terminal",
+    "console",
+    "input",
+    "text-editor"
+  ],
+  "author": "Ivanq",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/imachug/node-reader/issues"
+  },
+  "homepage": "https://github.com/imachug/node-reader#readme",
+  "dependencies": {
+    "ansi": "^0.3.1",
+    "keypress": "^0.2.1"
+  }
+}
