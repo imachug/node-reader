@@ -94,160 +94,17 @@ Reader.prototype.use = function(type) {
 	} else if(Reader.patterns[type]) {
 		Reader.patterns[type].apply(this, args);
 	} else {
-		throw new TypeError("Unclear pattern " + type);
+		try {
+			require("./patterns/" + type.replace(/(.[A-Z])/, function(s) {
+				return s[0] + "-" + s[1].toLowerCase();
+			})).apply(this, args);
+		} catch(e) {
+			throw new TypeError("Unclear pattern " + type);
+		}
 	}
 };
 
-Reader.patterns = {
-	horizontalMove: function() {
-		this.state.horizontalPos = 0;
-
-		this.onKey("Right", function() {
-			if(this.state.horizontalPos >= this.state.input.length) {
-				return;
-			}
-
-			this.state.horizontalPos++;
-			this.outStream.write(ansi.cursorForward(1));
-		});
-		this.onKey("Left", function() {
-			if(this.state.horizontalPos <= 0) {
-				return;
-			}
-
-			this.state.horizontalPos--;
-			this.outStream.write(ansi.cursorBackward(1));
-		});
-		this.onKey("End", function() {
-			// Go right
-			this.outStream.write(ansi.cursorForward(this.state.input.length - this.state.horizontalPos));
-
-			// Change inner data
-			this.state.horizontalPos = this.state.input.length;
-		});
-		this.onKey("Home", function() {
-			// Go left
-			this.outStream.write(ansi.cursorForward(this.state.horizontalPos));
-
-			// Change inner data
-			this.state.horizontalPos = 0;
-		});
-		this.on("data", function() {
-			this.state.horizontalPos = 0;
-		});
-	},
-	verticalHistory: function() {
-		this.onKey("Up", function() {
-			// TODO: History
-		});
-		this.onKey("Down", function() {
-			// TODO: History
-		});
-	},
-	exit: function() {
-		this.onKey("Ctrl + C", function() {
-			// Replace characters with spaces
-			this.outStream.write(ansi.cursorBackward(this.state.horizontalPos) + " ".repeat(this.state.input.length));
-
-			// Go left
-			this.outStream.write(ansi.cursorBackward(this.state.input.length));
-
-			// Change inner data
-			this.state.input = "";
-			this.state.horizontalPos = 0;
-		});
-		this.onKey("Ctrl + D", function() {
-			process.exit();
-		});
-	},
-	autoComplete: function() {
-		this.onKey("Tab", function() {
-			// TODO: Autocomplete
-		});
-	},
-	showInput: function() {
-		this.use("horizontalMove");
-		this.use("verticalHistory");
-		this.use("exit");
-		this.use("autoComplete");
-
-		this.state.input = "";
-		this.state.visibleInput = "";
-
-		this.on("char", function(ch) {
-			var visible = this.state.funcVisible(ch);
-
-			this.outStream.write(visible + this.state.visibleInput.substr(this.state.horizontalPos));
-			if(this.state.horizontalPos >= this.state.visibleInput.length) {
-				var n = this.state.horizontalPos - this.state.visibleInput.length;
-				if(n) {
-					this.outStream.write(ansi.cursorForward(n));
-				}
-			} else {
-				this.outStream.write(ansi.cursorBackward(this.state.visibleInput.length - this.state.horizontalPos));
-			}
-
-			this.state.input = this.state.input.substr(0, this.state.horizontalPos) + ch + this.state.input.substr(this.state.horizontalPos);
-			this.state.visibleInput = this.state.visibleInput.substr(0, this.state.horizontalPos) + visible + this.state.visibleInput.substr(this.state.horizontalPos);
-			this.state.horizontalPos++;
-		});
-		this.onKey("Return", function() {
-			this.outStream.write("\n");
-			this.emit("data", this.state.input);
-
-			this.state.input = "";
-			this.state.visibleInput = "";
-		});
-		this.onKey("Backspace", function() {
-			if(this.state.horizontalPos <= 0) {
-				return;
-			}
-
-			// Remove character from inner data
-			this.state.input = this.state.input.substr(0, this.state.horizontalPos - 1) + this.state.input.substr(this.state.horizontalPos);
-			this.state.visibleInput = this.state.visibleInput.substr(0, this.state.horizontalPos - 1) + this.state.visibleInput.substr(this.state.horizontalPos);
-			this.state.horizontalPos--;
-
-			this.outStream.write(ansi.cursorBackward(1) + this.state.visibleInput.substr(this.state.horizontalPos) + " " + ansi.cursorBackward(this.state.visibleInput.length - this.state.horizontalPos + 1));
-		});
-		this.onKey("Clear", function() {
-			// Replace characters with spaces
-			this.outStream.write(ansi.cursorBackward(this.state.horizontalPos) + " ".repeat(this.state.visibleInput.length));
-
-			// Go left
-			this.outStream.write(ansi.cursorBackward(this.state.visibleInput.length));
-
-			// Change inner data
-			this.state.input = "";
-			this.state.visibleInput = "";
-			this.state.horizontalPos = 0;
-		});
-		this.onKey("Delete", function() {
-			if(this.state.horizontalPos >= this.state.visibleInput.length) {
-				return;
-			}
-
-			// Remove character from inner data
-			this.state.input = this.state.input.substr(0, this.state.horizontalPos) + this.state.input.substr(this.state.horizontalPos + 1);
-			this.state.visibleInput = this.state.visibleInput.substr(0, this.state.horizontalPos) + this.state.visibleInput.substr(this.state.horizontalPos + 1);
-
-			this.outStream.write(this.state.visibleInput.substr(this.state.horizontalPos) + " " + ansi.cursorBackward(this.state.visibleInput.length - this.state.horizontalPos + 1));
-		});
-	},
-	input: function() {
-		this.use("showInput");
-
-		this.state.funcVisible = function(ch) {
-			return ch;
-		};
-	},
-	password: function() {
-		this.use("showInput");
-
-		this.state.funcVisible = function(ch) {
-			return "*";
-		};
-	}
-};
+// Deprecated, use ./patterns/ instead.
+Reader.patterns = {};
 
 module.exports = Reader;
