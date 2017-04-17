@@ -3,8 +3,8 @@ var keypress = require("keypress");
 var EventEmitter = require("events").EventEmitter;
 
 function Reader(inStream, outStream) {
-	this.inStream = inStream;
-	this.outStream = outStream;
+	this.inStream = inStream || process.stdin;
+	this.outStream = outStream || process.stdout;
 
 	this.lastEnterTime = 0;
 	this.state = {};
